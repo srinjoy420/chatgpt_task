@@ -8,16 +8,20 @@ dotenv.config()
 const userSchema=new Schema({
     name:{
         type:String,
+        lowerCase:true,
+        trim:true,
         required:true
     },
     email:{
         type:String,
         required:true,
+         lowerCase:true,
          unique:true,
     },
     password:{
         type:String,
-        required:[true,"password is require"]
+        required:[true,"password is require"],
+         minlength: [4, "minmum 4 charecter neede"]
     },
     role:{
         type:String,
@@ -46,21 +50,21 @@ const userSchema=new Schema({
 },{timestamps:true})
 
 // hash password
-userSchema.pre('save',async function next() {
-    if(!this.isModified(this.password) )return next();
+userSchema.pre('save',async function (next) {
+    if(!this.isModified("password") )return next();
     this.password=await bcrypt.hash(this.password,10)
     next()
 
     
 })
 //compare password
-userSchema.method.ispasswordCorrect=async function (password) {
-    await bcrypt.compare(password,this.password)
+userSchema.methods.ispasswordCorrect=async function (password) {
+    return await bcrypt.compare(password,this.password)
     
 }
 // generate accessToken
-userSchema.method.generateAcessToken=function(){
-    jwt.sign(
+userSchema.methods.generateAcessToken=function(){
+    return jwt.sign(
         {
             _id:this._id,
             email:this.email,
@@ -73,8 +77,8 @@ userSchema.method.generateAcessToken=function(){
     )
 }
 //generate refereshToken
-userSchema.method.gererateRefreshToken=function(){
-    jwt.sign(
+userSchema.methods.gererateRefreshToken=function(){
+    return jwt.sign(
         {
             _id:this._id,
             email:this.email,
@@ -88,11 +92,11 @@ userSchema.method.gererateRefreshToken=function(){
 
 }
 //email verification token
-userSchema.method.emailverificatioonTokren=function(){
+userSchema.methods.generateTemporaryToken=function(){
     const unhasedToken=crypto.randomBytes(32).toString("hex")
-    const hashedToken=crypto.createHash("sha256").toUpdate(unhasedToken).digest("hex")
+    const hashCedToken=crypto.createHash("sha256").update(unhasedToken).digest("hex")
     const tokenExpiry=new Date(Date.now()+20*60*1000)
-    return {unhasedToken,hashedToken,tokenExpiry}
+    return {unhasedToken,hashCedToken,tokenExpiry}
 }
 const User=mongoose.model("User",userSchema)
 export default User
